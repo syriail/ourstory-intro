@@ -31,39 +31,27 @@ The system consists of three **_separate_** parts (sub-projects)
 ## Backend
 
 The server-side components and services which provide the core funcionalities and logic of the system.
-[Full documentation of the backend](https://github.com/syriail/ourstory-backend)
+The backend is being developed using Serverless and Event Driven architectures.
+
+[More details](https://github.com/syriail/ourstory-backend)
 
 ## Manager
 
-A web application where authorized users can define collections, add stories and translate stories
+A web application where authorized users can define collections, add stories, and translate stories
+
+The manager is being developed using ReactJs
+
+[More details](https://github.com/syriail/ourstory-manager)
 
 ## Frontend
 
 Where visitors search for stories and get the results accordingly.
 
+The manager is being developed using ReactJs
+
+[More details](https://github.com/syriail/ourstory-frontend)
+
 # APIs
-
-## Get Collections
-
-It fetches all the collection which the user is the manager of or editor
-
-- REST API: GET /collections?locale={locale}
-
-- Authorized Roles: Collection Manager, Collection Editor
-
-- Query Params:
-
-  - locale: The user locale to fetch information accordingly
-
-- Returns: List of collections `{ collections: []}`
-  - id: Collection id
-  - name: Collection's name in user's language if available, otherwise in default language
-  - description: Collection's description in user's language if available, otherwise in default language
-  - defaultLocale: The default language in which the collection was originally created
-  - availableTranslations: The languages the collection is translated into execluding the default locale. Expample `['ar', 'de']`
-  - manager: Collection manager's name
-  - createdAt: Create date
-  - Editors: list of authorized editors names `{editors:[string]}`
 
 ## Create Collection
 
@@ -80,19 +68,78 @@ It fetches all the collection which the user is the manager of or editor
   - editors?: List of editors' ids `editors:[string]`
   - tags?: List of slugs of collection-specific fields `tags:[{slug, name}]`
 
-- Returns: The newely added collectoin
+- Status Code:
+
+  - 201: Success
+  - 403: Unauthorized
+  - 400: Missing param
+
+- Returns: The newely added collectoin `{collection: {}}`
   - id: Collection id
   - name: Collection's name in user's language if available, otherwise in default language
-  - description?: Collection's description in user's language if available, otherwise in default language
+  - description?: Collection's description
+  - defaultLocale: The default language in which the collection was originally created
+  - availableTranslations: []
+  - manager: Collection manager object
+  - createdAt: Create date
+  - Editors?: list of authorized editors
+  - tags?: list of tags
+
+## Update Collection
+
+- REST API: PATCH /collections
+
+- Authorized Roles: Collection Manager
+
+- Body Params:
+
+  - id: Collection id
+  - defaultLocale: The default language of the collection
+  - name: Collection's name
+  - description?: Collection's description
+  - managerId: Manager's id
+  - editors?: List of editors' ids `editors:[string]`
+  - tags?: List of slugs of collection-specific fields `tags:[{slug, name}]`
+
+- Status Code:
+
+  - 201: Success
+  - 403: Unauthorized
+  - 400: Missing param
+
+- Return: Nothing
+
+## Get Collections
+
+It fetches all the collection which the user is the manager of or editor
+
+- REST API: GET /collections?locale={locale}
+
+- Authorized Roles: Collection Manager, Collection Editor
+
+- Query Params:
+
+  - locale: The user locale to fetch information accordingly
+
+- Status Code:
+
+  - 200: Success
+  - 403: Unauthorized
+  - 400: Missing locale
+
+- Returns: List of collections `{ collections: []}`
+  - id: Collection id
+  - name: Collection's name in the language specified in the query if available, otherwise in default language
+  - description: Collection's description in the language specified in the query if available, otherwise in default language
   - defaultLocale: The default language in which the collection was originally created
   - availableTranslations: The languages the collection is translated into execluding the default locale. Expample `['ar', 'de']`
-  - manager: Collection manager's name
+  - manager: Collection manager object
   - createdAt: Create date
-  - Editors?: list of authorized editors names
+  - Editors: list of authorized editors
 
 ## Get Collection
 
-- REST API: GET /collections/{collectionId}?locale={locale}
+- REST API: GET /collections/details/{collectionId}?locale={locale}
 
 - Authorized Roles: Collection Manager, Collection Editor
 
@@ -101,16 +148,44 @@ It fetches all the collection which the user is the manager of or editor
   - collectionId: Collection's id
   - locale: The language in which the data need to be presented
 
-- Returns: Collection's details
+- Status Code:
+
+  - 200: Success
+  - 403: Unauthorized
+  - 400: Missing collectionId or locale
+
+- Returns: Collection's details `{collection:{}}`
   - id: Collection id
-  - name: Collection's name in user's language if available, otherwise in default language
-  - description?: Collection's description in user's language if available, otherwise in default language
+  - name: Collection's name in the language specified in the query if available, otherwise in default language
+  - description?: Collection's description in in the language specified in the query if available, otherwise in default language
   - defaultLocale: The default language in which the collection was originally created
   - availableTranslations: The languages the collection is translated into execluding the default locale. Expample `['ar', 'de']`
-  - manager: Collection manager's name
+  - manager: Collection manager object
   - createdAt: Create date
-  - Editors?: list of authorized editors `editors[{id, name}]`
-  - tags?: Collection's tags `tags:[{id, slug, name}]`
+  - Editors?: list of authorized editors
+  - tags?: Collection's tags `tags:[{slug, name}]`
+
+## Translate Collection
+
+Translate a collection into a given language
+
+- REST API: POST /collections/translate
+
+- Body:
+
+  - id: Collection id
+  - locale: The language which the colllection must translated into
+  - name: The translated name
+  - description?: The translated description
+  - tags?: The translted tags `tags:[{slug, name}]`
+
+- Status Code:
+
+  - 201: Success
+  - 403: Unauthorized
+  - 400: Missing params
+
+- Returns: Nothing
 
 ## Create Story
 
@@ -125,23 +200,29 @@ Add a story to a collection in Collection's default language
   - collectionId: Collection id
   - defaultLocale: The default language in which the collection was originally created
   - storyType: The type of the story, picked from pre-defined list
-  - storyTitle: Story's title in user's language if available
+  - storyTitle: Story's title
   - storyTellerAge?: The age of story teller
   - storyTellerGender?: The gender of the story teller
-  - tags?: Tags values for this story `tags:[{id, slug, name, tagValue}]`
   - storyAbstraction?: The abstraction of the story
   - storyTranscript?: The transcript of the story
   - storyTellerName?: The name of the story teller
   - storyTellerPlaceOfOrigin?: Place of origin of the story teller
   - storytellerResidency?: The residency of the story teller
   - storyCollectorName?: The name of the person who collected the story
+  - tags?: Tags values for this story `tags:[{slug, tagValue}]`
 
-- Returns: The newly created story
+- Status Code:
+
+  - 201: Success
+  - 403: Unauthorized
+  - 400: Missing required params
+
+- Returns: The newly created story `{story:{}}`
   - id: Story id
   - collectionId: Collection id
   - defaultLocale: The default language in which the collection was originally created
   - storyType: The type of the story
-  - storyTitle: Story's title in user's language if available, otherwise in default language
+  - storyTitle: Story's title
   - storyTellerAge?: The age of story teller
   - storyTellerGender?: The gender of the story teller
   - storyTitle: Story title
@@ -154,21 +235,30 @@ Add a story to a collection in Collection's default language
 
 ## Update Stroy
 
-Add a story to a collection in Collection's default language
-
-- REST API: PATCH /stories/{storyId}
+- REST API: PATCH /story/{storyId}
 
 - Authorized Roles: Collection Manager, Collection Editor
 
-The body and return response is identical to Create Story
+- The body and return response is identical to Create Story
+
+- Status Code:
+
+  - 201: Success
+  - 403: Unauthorized
+  - 400: Missing required params
 
 ## Delete Story
 
 Delete the given story with all available translations
 
-- REST API: DELETE /stories/{storyId}
+- REST API: DELETE /story/{storyId}
 
 - Authorized Roles: Collection Manager, Collection Editor
+
+- Status Code:
+
+  - 204: Success
+  - 403: Unauthorized
 
 ## Get Story Details
 
@@ -181,7 +271,13 @@ Delete the given story with all available translations
   - storyId: Story id,
   - locale: The language in which the data need to be presented
 
-- Returns: List of stories `{stories:[]}`
+- Status Code:
+
+  - 200: Success
+  - 403: Unauthorized
+  - 400: Missing storyId or locale
+
+- Returns: List of stories `{}`
   - id: Story id
   - collectionId: Collection's id
   - defaultLocale: The default language in which the collection was originally created
@@ -189,7 +285,7 @@ Delete the given story with all available translations
   - storyTitle: Story's title in the given language if available, otherwise in default language
   - storyTellerAge?: The age of story teller
   - storyTellerGender?: The gender of the story teller
-  - tags?: Tags values for this story `tags:[{id, slug, name, tagValue}]`
+  - tags?: Tags values for this story `tags:[{storyId, collectionId, locale, slug, name, value}]`
   - title: Story title
   - storyAbstraction?: The abstraction of the story
   - storyTranscript?: The transcript of the story
@@ -211,9 +307,55 @@ Gets a signed url to upload a media file to S3 media bucket
 
   - storyId: Story id
 
+- Status Code:
+
+  - 200: Success
+  - 403: Unauthorized
+  - 400: Missing storyId
+
 - Returns:
   - uploadUrl: Signed url to upload the file to
   - attachmentUrl: The path which the story should store to refer to the media
+
+## Get Download Signed Url
+
+Gets a signed url to download/view a media file
+
+- REST API: GET /downloadUrl?path={path}
+
+- Params:
+
+  - path: media path
+
+- Authorized Roles: Authorized/Unauthorized users
+
+- Status Code:
+
+  - 200: Success
+  - 403: Unauthorized
+  - 400: Missing path
+
+- Returns the url as string to view/download the media
+
+## Get Tags
+
+Get all tags with there names
+
+- REST API: GET /tags?locale={locale}
+
+- Params:
+
+  - locale: The locale in which the tags' names should be returned
+
+- Status Code:
+
+  - 200: Success
+  - 403: Unauthorized
+  - 400: Missing locale
+
+- Returns: List of tags `{tags:[]}`
+  - slug: Slug of the tag
+  - name: The name of the tag in the language specified.
 
 # Data Model
 
