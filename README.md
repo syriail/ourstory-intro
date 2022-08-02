@@ -451,3 +451,21 @@ export interface UploadAttachmentData{
 }
 
 ```
+
+# Add New Language
+
+Ourstory is a mulilinugal stories archive. English and Arabic languages are already set up, configured and tuned.
+
+Adding a new language is easy by following these steps:
+
+- Algolia
+  - Create new indexes, one index for each stage/language.
+    The name of the index should be `{stage}_ourstory_{locale}`
+    This is not regid requirement, so it could be changed also.
+  - Configure the non-production index by copying searchable attributes and facets from the existing indexes.
+  - Tune the non-production index according to the language characteristics.
+    For example, Arabic language has its own search issures which needs to be address by adding more configurations.
+  - Test the index
+  - If the search results are satisfying, add the production index
+- UI
+  - In both ourstory-manager and ourstory-frontend add a new translation for UI in public/locales/
